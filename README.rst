@@ -3,6 +3,8 @@ django-ddp-meteor-todo
 
 Meteor todo example with django-ddp backend
 
+Updated example from commoncode/django-ddp
+
 Installation
 ------------
 Install django-dpp
