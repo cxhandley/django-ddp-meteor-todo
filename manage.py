@@ -3,7 +3,7 @@ import os
 import sys
 
 if __name__ == "__main__":
-    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "djangoddpmeteor.settings")
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "django-ddp-meteor-todo.settings")
 
     from dddp import greenify
     greenify()
