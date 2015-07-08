@@ -1,8 +1,24 @@
 if (Meteor.isClient) {
   // This code only runs on the client
   Django = DDP.connect('http://'+window.location.hostname+':8000/');
+  
+  Meteor.connection = Django;
+  Accounts.connection = Django;
+
+  // Patch methods
+  var methods = ["subscribe", "call", "apply", "methods", "status", "reconnect", "disconnect", "onReconnect"];
+  methods.forEach(function(method) {
+    Meteor[method] = function() {
+      return Django[method].apply(Django, arguments);
+    };
+  });
+  
+
   Tasks = new Mongo.Collection("django_todos.task", {"connection": Django});
   Django.subscribe('Tasks');
+  Meteor.users = new Meteor.Collection("users", {"connection": Django});
+  Django.subscribe('meteor.loginServiceConfiguration');
+  Django.subscribe('users')
 
 
   Template.body.helpers({
@@ -29,7 +45,9 @@ if (Meteor.isClient) {
       var text = event.target.text.value;
 
       Tasks.insert({
-        text: text
+        text: text,
+        owner: Meteor.userId(),
+        username: Meteor.user().username
       }); // created_at set on the server
 
       event.target.text.value = "";
@@ -50,6 +68,10 @@ if (Meteor.isClient) {
     "click .delete": function() {
       Tasks.remove(this._id);
     }
+  });
+
+  Accounts.ui.config({
+    passwordSignupFields: "USERNAME_ONLY"
   });
 
 }

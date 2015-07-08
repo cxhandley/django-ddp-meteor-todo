@@ -8,7 +8,7 @@ class Task(Collection):
 
     @api_endpoint('insert')
     def insert(self, params):
-      obj = models.Task(text=params['text'], checked=False)
+      obj = models.Task(text=params['text'], owner=params['owner'], username=params['username'], checked=False)
       obj.save()
       obj.meteor_id = get_meteor_id(obj)
       obj.save()

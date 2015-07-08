@@ -8,6 +8,9 @@ class Task(models.Model):
     meteor_id = models.CharField(max_length=20, null=True)
     checked = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
+    owner = models.CharField(max_length=20, null=True)
+    username = models.CharField(max_length=20, null=True)
+
 
     class Meta:
         ordering = ['created_at']
