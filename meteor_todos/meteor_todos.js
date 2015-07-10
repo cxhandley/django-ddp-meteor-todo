@@ -1,6 +1,6 @@
 if (Meteor.isClient) {
   // This code only runs on the client
-  Django = DDP.connect('http://'+window.location.hostname+':8000/');
+  var Django = DDP.connect('http://'+window.location.hostname+':8000/');
   
   Meteor.connection = Django;
   Accounts.connection = Django;
@@ -18,38 +18,34 @@ if (Meteor.isClient) {
   Django.subscribe('Tasks');
   Meteor.users = new Meteor.Collection("users", {"connection": Django});
   Django.subscribe('meteor.loginServiceConfiguration');
-  Django.subscribe('users')
 
 
-  Template.body.helpers({
+ Template.body.helpers({
     tasks: function () {
       if (Session.get("hideCompleted")) {
         // If hide completed is checked, filter tasks
-        return Tasks.find({checked: {$ne: true}}, {sort: {created_at: -1}});
+        return Tasks.find({checked: {$ne: true}}, {sort: {createdAt: -1}});
       } else {
         // Otherwise, return all of the tasks
-        return Tasks.find({}, {sort: {created_at: -1}});
+        return Tasks.find({}, {sort: {createdAt: -1}});
       }
     },
-    hideCompleted: function() {
+    hideCompleted: function () {
       return Session.get("hideCompleted");
     },
-    incompleteCount: function() {
+    incompleteCount: function () {
       return Tasks.find({checked: {$ne: true}}).count();
     }
   });
 
   Template.body.events({
     "submit .new-task": function (event) {
-      // This function is called when the new task is submitted
+      // This function is called when the new task form is submitted
       var text = event.target.text.value;
 
-      Tasks.insert({
-        text: text,
-        owner: Meteor.userId(),
-        username: Meteor.user().username
-      }); // created_at set on the server
+      Meteor.call("/django_todos.task/addTask", text, Meteor.userId());
 
+      // Clear form
       event.target.text.value = "";
 
       // Prevent default form submit
@@ -61,20 +57,50 @@ if (Meteor.isClient) {
   });
 
   Template.task.events({
-    "click .toggle-checked": function() {
-      // set the checked property to the opposite of its current value
-      Tasks.update(this._id, {$set: {checked: ! this.checked}});
+    "click .toggle-checked": function () {
+      // Set the checked property to the opposite of its current value
+      if (this.owner == Meteor.userId()) {
+        Django.call("/django_todos.task/setChecked", this._id, ! this.checked);
+      } else {
+        alert("Not authorized");
+        event.target.checked = this.checked;
+      }
     },
-    "click .delete": function() {
-      Tasks.remove(this._id);
+    "click .delete": function () {
+      if (this.owner == Meteor.userId()) {
+        Django.call("/django_todos.task/deleteTask", this._id);
+      } else {
+        alert("Not authorized");
+      }
     }
   });
 
   Accounts.ui.config({
     passwordSignupFields: "USERNAME_ONLY"
   });
-
 }
+
+Meteor.methods({
+  addTask: function (text) {
+    // Make sure the user is logged in before inserting a task
+    if (! Meteor.userId()) {
+      throw new Meteor.Error("not-authorized");
+    }
+
+    Tasks.insert({
+      text: text,
+      createdAt: new Date(),
+      owner: Meteor.userId(),
+      username: Meteor.user().username
+    });
+  },
+  deleteTask: function (taskId) {
+    Tasks.remove(taskId);
+  },
+  setChecked: function (taskId, setChecked) {
+    Tasks.update(taskId, { $set: { checked: setChecked} });
+  }
+});
 
 if (Meteor.isServer) {
   Meteor.startup(function () {

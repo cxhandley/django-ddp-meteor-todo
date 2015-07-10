@@ -1,29 +1,29 @@
 from dddp.api import API, APIMixin, Collection, Publication, api_endpoint
-from dddp.models import get_meteor_id, get_object
+from dddp.models import get_meteor_id, get_object, get_object_id
 import models
 
+from django.contrib.auth.models import User
 
 class Task(Collection):
     model = models.Task
 
-    @api_endpoint('insert')
-    def insert(self, params):
-      obj = models.Task(text=params['text'], owner=params['owner'], username=params['username'], checked=False)
-      obj.save()
-      obj.meteor_id = get_meteor_id(obj)
+    @api_endpoint('addTask')
+    def add_task(self, text, meteor_id):
+      u = User.objects.get(pk=get_object_id(User, meteor_id))
+      obj = models.Task(text=text, owner=meteor_id, username=u.username, checked=False)
       obj.save()
 
-    @api_endpoint('remove')
-    def remove(self, params):
-      obj = models.Task.objects.filter(meteor_id=params['_id'])
+
+    @api_endpoint('setChecked')
+    def set_checked(self, meteor_id, val):
+      obj = models.Task.objects.get(pk=get_object_id(models.Task, meteor_id))
+      obj.checked = val
+      obj.save()
+
+    @api_endpoint('deleteTask')
+    def delete_task(self, meteor_id):
+      obj = models.Task.objects.get(pk=get_object_id(models.Task, meteor_id))
       obj.delete()
-
-    @api_endpoint('update')
-    def update(self, params, _set, other):
-      obj = models.Task.objects.get(meteor_id=params['_id'])
-      for key, val in _set['$set'].items():
-        setattr(obj, key, val)
-      obj.save()
 
 
 class Tasks(Publication):
