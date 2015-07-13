@@ -37,7 +37,7 @@ INSTALLED_APPS = (
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'dddp',
-    'accounts',
+    'dddp.accounts',
     'django_todos',
 )
 

@@ -17,8 +17,10 @@ class Task(Collection):
     @api_endpoint('setChecked')
     def set_checked(self, meteor_id, val):
       obj = models.Task.objects.get(pk=get_object_id(models.Task, meteor_id))
+      print obj.created_at
       obj.checked = val
       obj.save()
+      print obj.created_at
 
     @api_endpoint('deleteTask')
     def delete_task(self, meteor_id):
