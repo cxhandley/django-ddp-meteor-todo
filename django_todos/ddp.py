@@ -3,6 +3,7 @@ from dddp.models import get_meteor_id, get_object, get_object_id
 import models
 
 from django.contrib.auth.models import User
+from django.db.models import Q
 
 class Task(Collection):
     model = models.Task
@@ -25,10 +26,18 @@ class Task(Collection):
       obj = models.Task.objects.get(pk=get_object_id(models.Task, meteor_id))
       obj.delete()
 
+    @api_endpoint('setPrivate')
+    def set_private(self, meteor_id, val):
+      obj = models.Task.objects.get(pk=get_object_id(models.Task, meteor_id))
+      obj.private = val
+      obj.save()
+
 
 class Tasks(Publication):
-    queries = [
-        models.Task.objects.all(),
+
+  def get_queries(self, userId):
+    return [
+        models.Task.objects.filter(Q(owner=userId) | Q(private=False)),
     ]
 
 

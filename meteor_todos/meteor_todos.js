@@ -13,11 +13,22 @@ if (Meteor.isClient) {
     };
   });
   
-
-  Tasks = new Mongo.Collection("django_todos.task", {"connection": Django});
-  Django.subscribe('Tasks');
   Meteor.users = new Meteor.Collection("users", {"connection": Django});
   Django.subscribe('meteor.loginServiceConfiguration');
+  Django.subscribe('Tasks', '');
+
+
+  Tasks = new Mongo.Collection("django_todos.task", {"connection": Django});
+  
+  
+  //Accounts.onLogin( function () {
+  //  Django.subscribe('Tasks', Meteor.userId());
+  //});
+
+  Tracker.autorun(function () {
+    Django.subscribe('Tasks', Meteor.userId());
+  });
+
 
 
  Template.body.helpers({
@@ -72,6 +83,19 @@ if (Meteor.isClient) {
       } else {
         alert("Not authorized");
       }
+    },
+    "click .toggle-private": function() {
+      if (this.owner == Meteor.userId()) {
+        Django.call("/django_todos.task/setPrivate", this._id, ! this.private);
+      } else {
+        alert("Not authorized");
+      }
+    }  
+  });
+
+  Template.task.helpers({
+    isOwner: function () {
+      return this.owner === Meteor.userId();
     }
   });
 
